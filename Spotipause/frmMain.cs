@@ -174,6 +174,7 @@ namespace Spotipause
             var blacklisted = false;
             var activeWindowPath = "";
 
+            // The next 10 lines retrieve the path of the current window, which will be used to uniquely identify the program
             IntPtr activeWindow = GetForegroundWindow();
             uint processId;
             GetWindowThreadProcessId(activeWindow, out processId);
@@ -186,6 +187,7 @@ namespace Spotipause
                 var path = activeProcess.MainModule.FileName;
                 activeWindowPath = path;
 
+                // open the blacklist SQL database and check if the path of the current program is in it. If yes -> blocked
                 SqlConnection connection = new SqlConnection(Properties.Settings.Default.blacklistConnectionString);
                 SqlCommand command = new SqlCommand("select * from blacklist where path LIKE @path", connection);
                 command.Parameters.Add("@path", System.Data.SqlDbType.NText).Value = path;
@@ -203,6 +205,7 @@ namespace Spotipause
 
             var sql = "";
 
+            // add programs to the blacklist by pressing Ctrl + Alt + Shift + Insert. Adds the current programs path to the blacklist database
             if(pressingControl && pressingAlt && pressingShift && e.KeyCode == Keys.Insert && !blacklisted)
             {
                 sql = "INSERT INTO blacklist (path) VALUES (@path);";
@@ -211,6 +214,7 @@ namespace Spotipause
 #endif
                 //this.Notification("s");
             }
+            // same as the function before, but removes the path from the blacklist
             if(pressingControl && pressingAlt && pressingShift && e.KeyCode == Keys.Delete)
             {
 #if DEBUG
@@ -219,6 +223,7 @@ namespace Spotipause
                 sql = "DELETE FROM blacklist WHERE path LIKE @path;";
             }
 
+            // executes the sql commands for adding and removing programs from the blacklist
             if (sql != "" && activeWindowPath != "")
             {
                 try
@@ -231,10 +236,13 @@ namespace Spotipause
                 } catch(Exception) { }
             }
 
+            // simply block the following code from executing if it is blacklisted
             if (blacklisted)
             {
                 return;
             }
+
+            // that's it. Although it's fairly simple, I don't understand most of what I programmed then
 
             #endregion
 
